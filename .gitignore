@@ -1,0 +1,41 @@
+# =====================
+# OS / Editor
+# =====================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# =====================
+# Environment variables
+# =====================
+.env
+.env.*
+!.env.example
+
+# =====================
+# Frontend (Vite / React)
+# =====================
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.cache/
+
+# =====================
+# Backend (.NET)
+# =====================
+**/bin/
+**/obj/
+**/.vs/
+
+# =====================
+# SQLite / local data
+# =====================
+*.db
+*.db-shm
+*.db-wal
+
+# =====================
+# Logs
+# =====================
+*.log

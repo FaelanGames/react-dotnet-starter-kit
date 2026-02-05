@@ -99,7 +99,10 @@ if (app.Environment.IsDevelopment())
 }
 
 // Ensure DB migrations applied on startup (DX win for buyers)
-await DbInitializer.EnsureMigratedAsync(app.Services);
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    await DbInitializer.EnsureMigratedAsync(app.Services);
+}
 
 app.UseHttpsRedirection();
 
@@ -109,3 +112,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program { }

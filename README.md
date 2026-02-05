@@ -87,7 +87,7 @@ Make sure you have the following installed:
 ### 1️⃣ Clone the repository
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/FaelanGames/react-dotnet-starter-kit
 cd starter-kit
 ```
 
@@ -169,7 +169,7 @@ cd frontend
 npm run test
 ```
 
-### Backend tests (if present)
+### Backend tests
 
 ```bash
 cd backend
