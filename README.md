@@ -239,7 +239,8 @@ The codebase is structured to support all of the above without rewrites.
 
 ## License
 
-**TBD** — choose an appropriate license before distributing or selling.
+This project is provided under a commercial license.
+See the LICENSE file for full terms.
 
 ---
 
