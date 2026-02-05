@@ -49,6 +49,8 @@ The Software includes third‑party libraries and frameworks that are licensed u
 
 Those licenses apply **only** to the third‑party components and do not grant any rights to the Software itself beyond what is stated in this license.
 
+See NOTICE.md for details.
+
 ---
 
 ## 5. Warranty Disclaimer
