@@ -37,11 +37,17 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// CORS for Vite dev server
+var allowedCorsOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? Array.Empty<string>();
+
+if (allowedCorsOrigins.Length == 0)
+    throw new InvalidOperationException("Cors:AllowedOrigins must specify at least one origin.");
+
 builder.Services.AddCors(opt =>
 {
     opt.AddPolicy("frontend", p =>
-        p.WithOrigins("http://localhost:5173")
+        p.WithOrigins(allowedCorsOrigins)
          .AllowAnyHeader()
          .AllowAnyMethod()
     );
