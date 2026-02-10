@@ -239,7 +239,7 @@ The codebase is structured to support all of the above without rewrites.
 
 ## License
 
-This project is provided under a commercial license.
+This project is provided under a MIT license.
 See the LICENSE file for full terms.
 
 ---

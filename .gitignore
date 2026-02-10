@@ -15,6 +15,11 @@ Thumbs.db
 !.env.example
 
 # =====================
+# Root node_modules (repo-level scripts)
+# =====================
+node_modules/
+
+# =====================
 # Frontend (Vite / React)
 # =====================
 frontend/node_modules/

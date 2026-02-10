@@ -1,0 +1,14 @@
+{
+  "name": "react-dotnet-starter-kit",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "concurrently -n api,web \"dotnet watch run --project backend/src/StarterKit.Api --launch-profile StarterKit.Api\" \"npm --prefix frontend run dev\"",
+    "test": "concurrently -n api,web \"dotnet test backend\" \"npm --prefix frontend run test -- --run\"",
+    "build": "npm --prefix frontend run build && dotnet build backend -c Release",
+    "lint": "npm --prefix frontend run lint"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
