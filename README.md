@@ -88,7 +88,7 @@ Make sure you have the following installed:
 
 ```bash
 git clone https://github.com/FaelanGames/react-dotnet-starter-kit
-cd starter-kit
+cd react-dotnet-starter-kit
 ```
 
 ---
@@ -193,6 +193,16 @@ Configured in `appsettings.json`:
 * JWT issuer / audience
 * JWT signing key
 * SQLite connection string
+
+> Warning: Never commit real JWT signing keys to source control. During development you can keep secrets in [.NET user secrets](https://learn.microsoft.com/aspnet/core/security/app-secrets):
+>
+> ```bash
+> cd backend
+> dotnet user-secrets init
+> dotnet user-secrets set "Jwt:SigningKey" "generate-a-long-random-value-here"
+> ```
+>
+> In production, set the same `Jwt:*` keys as environment variables (for example `Jwt__SigningKey`) so the existing `builder.Configuration` binding picks them up automatically.
 
 ---
 

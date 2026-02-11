@@ -1,7 +1,12 @@
-export type ApiError = {
+export class ApiError extends Error {
   status: number;
-  message: string;
-};
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
 
 export type ApiClientOptions = {
   baseUrl: string;
@@ -50,7 +55,7 @@ export class ApiClient {
 
     if (!res.ok) {
       const message = await safeReadError(res);
-      throw { status: res.status, message } satisfies ApiError;
+      throw new ApiError(res.status, message);
     }
 
     // Handle empty responses (just in case)
