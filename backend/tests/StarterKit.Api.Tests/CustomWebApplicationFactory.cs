@@ -33,11 +33,11 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 options.UseSqlite(_connection);
             });
 
-            // Build the provider and create schema
+            // Build the provider and apply migrations (matches production startup)
             var sp = services.BuildServiceProvider();
             using var scope = sp.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            db.Database.EnsureCreated();
+            db.Database.Migrate();
         });
     }
 

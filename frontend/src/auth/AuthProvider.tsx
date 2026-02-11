@@ -8,7 +8,8 @@ type AuthState = {
   api: ApiClient;
 };
 
-const TOKEN_KEY = "starterkit.token";
+export const TOKEN_STORAGE_KEY = "starterkit.token";
+const TOKEN_KEY = TOKEN_STORAGE_KEY;
 
 export const AuthContext = createContext<AuthState | null>(null);
 
@@ -25,9 +26,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(() => setToken(null), [setToken]);
 
-  // Base URL: configure via Vite env (fallback is your local API)
-  const baseUrl =
-    import.meta.env.VITE_API_BASE_URL?.toString() ?? "https://localhost:5001";
+  // Base URL: configure via Vite env (fallback matches the API launch profile)
+  const envApiBase = import.meta.env.VITE_API_BASE_URL?.toString();
+  const fallbackApiBase = "https://localhost:7042";
+  const baseUrl = envApiBase ?? fallbackApiBase;
+
+  if (!envApiBase && import.meta.env.DEV) {
+    console.warn(
+      "Missing VITE_API_BASE_URL. Using https://localhost:7042. Create frontend/.env to silence this warning."
+    );
+  }
 
   const api = useMemo(() => {
     return new ApiClient({

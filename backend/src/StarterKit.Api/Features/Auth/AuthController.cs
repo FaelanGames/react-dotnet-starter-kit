@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using StarterKit.Api.Auth;
@@ -14,6 +15,7 @@ public sealed class AuthController : ControllerBase
     private readonly AppDbContext _db;
     private readonly TokenService _tokens;
     private readonly JwtOptions _jwt;
+    private const int SqliteConstraintErrorCode = 19;
 
     public AuthController(AppDbContext db, TokenService tokens, IOptions<JwtOptions> jwt)
     {
@@ -42,7 +44,14 @@ public sealed class AuthController : ControllerBase
         };
 
         _db.Users.Add(user);
-        await _db.SaveChangesAsync();
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
+        {
+            return Conflict("Email is already registered.");
+        }
 
         return Ok(ToAuthResponse(user));
     }
@@ -71,5 +80,15 @@ public sealed class AuthController : ControllerBase
             TokenType: "Bearer",
             ExpiresInSeconds: _jwt.ExpiresMinutes * 60
         );
+    }
+
+    private static bool IsUniqueConstraintViolation(DbUpdateException ex)
+    {
+        if (ex.InnerException is SqliteException sqliteEx)
+        {
+            return sqliteEx.SqliteErrorCode == SqliteConstraintErrorCode;
+        }
+
+        return false;
     }
 }

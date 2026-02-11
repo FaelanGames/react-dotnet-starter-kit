@@ -22,7 +22,11 @@ export function RegisterPage() {
       setToken(res.accessToken);
       nav("/dashboard", { replace: true });
     } catch (err: any) {
-      setError(err?.message ?? "Registration failed");
+      if (err?.status === 409) {
+        setError("Email is already registered.");
+      } else {
+        setError(err?.message ?? "Registration failed");
+      }
     } finally {
       setBusy(false);
     }
