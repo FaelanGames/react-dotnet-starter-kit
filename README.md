@@ -1,4 +1,6 @@
 # React + .NET Starter Kit
+[![Support on Ko-fi](https://img.shields.io/badge/Support-Ko--fi-orange?logo=ko-fi)](https://ko-fi.com/faelangames)
+
 
 A production‑ready **full‑stack starter kit** using **React + TypeScript (Vite)** and **.NET 10 Web API**, with **JWT authentication**, **SQLite**, **tests**, and **CI** already set up.
 
@@ -262,3 +264,13 @@ See the LICENSE file for full terms.
 * Teams tired of re‑implementing auth
 
 If that’s you — this repo is meant to save you time.
+
+---
+
+## Support the project
+
+If this starter kit saved you time, helped you learn, or gave you a solid foundation for your project, you can support future work here:
+
+☕ https://ko-fi.com/faelangames
+
+Support is completely optional — but always appreciated.
