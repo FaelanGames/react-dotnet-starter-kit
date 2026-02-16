@@ -6,7 +6,7 @@ import { useAuth } from "../auth/useAuth";
 export function LoginPage() {
   const nav = useNavigate();
   const location = useLocation();
-  const { api, setToken } = useAuth();
+  const { api, setAuthTokens } = useAuth();
 
   const from = useMemo(() => {
     const st = location.state as { from?: string } | null;
@@ -25,7 +25,10 @@ export function LoginPage() {
 
     try {
       const res = await login(api, email, password);
-      setToken(res.accessToken);
+      setAuthTokens({
+        accessToken: res.accessToken,
+        refreshToken: res.refreshToken,
+      });
       nav(from, { replace: true });
     } catch (err: any) {
       setError(err?.message ?? "Login failed");

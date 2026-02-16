@@ -5,6 +5,10 @@ public sealed record LoginRequest(string Email, string Password);
 
 public sealed record AuthResponse(
     string AccessToken,
+    string RefreshToken,
     string TokenType,
-    int ExpiresInSeconds
+    int ExpiresInSeconds,
+    DateTime RefreshTokenExpiresUtc
 );
+
+public sealed record RefreshRequest(string RefreshToken);

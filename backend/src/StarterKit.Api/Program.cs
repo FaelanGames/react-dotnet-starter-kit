@@ -69,6 +69,9 @@ var jwt = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
 if (string.IsNullOrWhiteSpace(jwt.SigningKey) || jwt.SigningKey.Length < 32)
     throw new InvalidOperationException("Jwt:SigningKey must be at least 32 characters.");
 
+if (jwt.RefreshTokenDays <= 0)
+    throw new InvalidOperationException("Jwt:RefreshTokenDays must be greater than zero.");
+
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opt =>

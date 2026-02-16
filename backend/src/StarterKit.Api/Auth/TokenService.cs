@@ -1,5 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -17,12 +18,15 @@ public sealed class TokenService
         _opts = options.Value;
     }
 
+    public sealed record RefreshTokenResult(string Token, string Hash, DateTime ExpiresUtc);
+
     public string CreateToken(User user)
     {
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Email, user.Email),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new("uid", user.Id.ToString()),
         };
 
@@ -38,5 +42,20 @@ public sealed class TokenService
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public RefreshTokenResult CreateRefreshToken()
+    {
+        var tokenBytes = RandomNumberGenerator.GetBytes(64);
+        var token = Convert.ToBase64String(tokenBytes);
+        var hash = HashRefreshToken(token);
+        var expires = DateTime.UtcNow.AddDays(_opts.RefreshTokenDays);
+        return new RefreshTokenResult(token, hash, expires);
+    }
+
+    public static string HashRefreshToken(string token)
+    {
+        var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(token));
+        return Convert.ToBase64String(hashBytes);
     }
 }

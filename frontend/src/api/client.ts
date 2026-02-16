@@ -11,13 +11,13 @@ export class ApiError extends Error {
 export type ApiClientOptions = {
   baseUrl: string;
   getToken: () => string | null;
-  onUnauthorized?: () => void;
+  onUnauthorized?: () => Promise<boolean> | boolean;
 };
 
 export class ApiClient {
   private baseUrl: string;
   private getToken: () => string | null;
-  private onUnauthorized?: () => void;
+  private onUnauthorized?: () => Promise<boolean> | boolean;
 
   constructor(opts: ApiClientOptions) {
     this.baseUrl = opts.baseUrl.replace(/\/$/, "");
@@ -27,7 +27,8 @@ export class ApiClient {
 
   async request<T>(
     path: string,
-    init: RequestInit & { json?: unknown } = {}
+    init: RequestInit & { json?: unknown } = {},
+    retrying = false
   ): Promise<T> {
     const headers = new Headers(init.headers);
 
@@ -43,14 +44,21 @@ export class ApiClient {
     const token = this.getToken();
     if (token) headers.set("Authorization", `Bearer ${token}`);
 
-    const res = await fetch(`${this.baseUrl}${path}`, {
+    const body = init.json !== undefined ? JSON.stringify(init.json) : init.body;
+    const requestInit: RequestInit = {
       ...init,
       headers,
-      body: init.json !== undefined ? JSON.stringify(init.json) : init.body,
-    });
+      body,
+    };
+    delete (requestInit as { json?: unknown }).json;
 
-    if (res.status === 401) {
-      this.onUnauthorized?.();
+    const res = await fetch(`${this.baseUrl}${path}`, requestInit);
+
+    if (res.status === 401 && !retrying && this.onUnauthorized) {
+      const recovered = await this.onUnauthorized();
+      if (recovered) {
+        return this.request<T>(path, init, true);
+      }
     }
 
     if (!res.ok) {

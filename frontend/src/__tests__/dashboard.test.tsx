@@ -16,7 +16,8 @@ type AuthValue = NonNullable<ContextType<typeof AuthContext>>;
 function renderWithAuth(value?: Partial<AuthValue>) {
   const authValue: AuthValue = {
     token: "token",
-    setToken: vi.fn(),
+    refreshToken: "refresh",
+    setAuthTokens: vi.fn(),
     logout: vi.fn(),
     api: {} as ApiClient,
     ...value,

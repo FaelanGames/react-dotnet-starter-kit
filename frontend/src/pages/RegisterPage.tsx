@@ -5,7 +5,7 @@ import { useAuth } from "../auth/useAuth";
 
 export function RegisterPage() {
   const nav = useNavigate();
-  const { api, setToken } = useAuth();
+  const { api, setAuthTokens } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,7 +19,10 @@ export function RegisterPage() {
 
     try {
       const res = await register(api, email, password);
-      setToken(res.accessToken);
+      setAuthTokens({
+        accessToken: res.accessToken,
+        refreshToken: res.refreshToken,
+      });
       nav("/dashboard", { replace: true });
     } catch (err: any) {
       if (err?.status === 409) {

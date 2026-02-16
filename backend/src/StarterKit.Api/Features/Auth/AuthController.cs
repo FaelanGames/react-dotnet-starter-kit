@@ -53,7 +53,8 @@ public sealed class AuthController : ControllerBase
             return Conflict("Email is already registered.");
         }
 
-        return Ok(ToAuthResponse(user));
+        var response = await IssueTokensAsync(user);
+        return Ok(response);
     }
 
     [HttpPost("login")]
@@ -69,16 +70,70 @@ public sealed class AuthController : ControllerBase
         if (!PasswordHasher.Verify(req.Password, user.PasswordHash))
             return Unauthorized("Invalid credentials.");
 
-        return Ok(ToAuthResponse(user));
+        var response = await IssueTokensAsync(user);
+        return Ok(response);
     }
 
-    private AuthResponse ToAuthResponse(User user)
+    [HttpPost("refresh")]
+    public async Task<ActionResult<AuthResponse>> Refresh([FromBody] RefreshRequest req)
     {
-        var token = _tokens.CreateToken(user);
+        if (string.IsNullOrWhiteSpace(req.RefreshToken))
+            return BadRequest("Refresh token is required.");
+
+        var hash = TokenService.HashRefreshToken(req.RefreshToken);
+        var stored = await _db.RefreshTokens
+            .Include(rt => rt.User)
+            .SingleOrDefaultAsync(rt => rt.TokenHash == hash);
+
+        if (stored is null || !stored.IsActive || stored.User is null)
+            return Unauthorized("Invalid refresh token.");
+
+        stored.RevokedUtc = DateTime.UtcNow;
+
+        var response = await IssueTokensAsync(stored.User);
+        return Ok(response);
+    }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout([FromBody] RefreshRequest req)
+    {
+        if (string.IsNullOrWhiteSpace(req.RefreshToken))
+            return BadRequest("Refresh token is required.");
+
+        var hash = TokenService.HashRefreshToken(req.RefreshToken);
+        var stored = await _db.RefreshTokens
+            .SingleOrDefaultAsync(rt => rt.TokenHash == hash);
+
+        if (stored is null)
+            return NoContent();
+
+        if (stored.RevokedUtc is null)
+            stored.RevokedUtc = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync();
+        return NoContent();
+    }
+
+    private async Task<AuthResponse> IssueTokensAsync(User user)
+    {
+        var accessToken = _tokens.CreateToken(user);
+        var refresh = _tokens.CreateRefreshToken();
+
+        _db.RefreshTokens.Add(new RefreshToken
+        {
+            UserId = user.Id,
+            TokenHash = refresh.Hash,
+            ExpiresUtc = refresh.ExpiresUtc
+        });
+
+        await _db.SaveChangesAsync();
+
         return new AuthResponse(
-            AccessToken: token,
+            AccessToken: accessToken,
+            RefreshToken: refresh.Token,
             TokenType: "Bearer",
-            ExpiresInSeconds: _jwt.ExpiresMinutes * 60
+            ExpiresInSeconds: _jwt.ExpiresMinutes * 60,
+            RefreshTokenExpiresUtc: refresh.ExpiresUtc
         );
     }
 

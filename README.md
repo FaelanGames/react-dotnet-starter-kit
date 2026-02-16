@@ -36,15 +36,16 @@ So you can focus on **building features**, not setting up infrastructure.
 * Example protected endpoint: `GET /api/users/me`
 * Swagger with JWT support
 * Automatic DB migrations on startup
+* Rotating refresh tokens with `/api/auth/refresh` + `/api/auth/logout`
 
 ### Frontend (React)
 
 * React + TypeScript
 * Vite
 * React Router
-* Auth context with token persistence
+* Auth context with token + refresh token persistence
 * Protected routes
-* API client with automatic auth headers
+* API client with automatic auth headers and refresh handling
 * Example pages:
 
   * Register
@@ -210,10 +211,10 @@ Configured in `appsettings.json`:
 
 ## Authentication overview
 
-* Authentication uses **JWT Bearer tokens**
-* Tokens are issued on login / register
-* Frontend stores the token in `localStorage`
-* API endpoints are protected using `[Authorize]`
+* Authentication uses **JWT Bearer tokens** (default 60-minute expiry).
+* Refresh tokens are stored (hashed) in SQLite, rotated on every `/api/auth/refresh`, and revoked via `/api/auth/logout`.
+* The frontend keeps both tokens in `localStorage`, automatically calling the refresh endpoint if the API returns 401.
+* API endpoints are protected using `[Authorize]`.
 
 This setup is intentionally **simple and extensible** — suitable for:
 
@@ -237,12 +238,11 @@ This is a foundation, not a framework.
 
 ## Extending the project
 
-Common next steps:
+Next steps:
 
 * Add roles / permissions
 * Swap SQLite for Postgres
-* Add refresh tokens
-* Add feature‑based folders
+* Add feature-based folders
 * Add E2E tests
 
 The codebase is structured to support all of the above without rewrites.

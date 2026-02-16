@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using StarterKit.Api.Features.Auth;
@@ -16,7 +16,7 @@ public sealed class AuthFlowTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task Register_ThenMeReturnsCurrentUser()
+    public async Task Register_WithValidInput_ThenMeReturnsCurrentUser()
     {
         // Arrange
         var email = $"user{Guid.NewGuid():N}@example.com";
@@ -29,6 +29,7 @@ public sealed class AuthFlowTests : IClassFixture<CustomWebApplicationFactory>
         var auth = await registerRes.Content.ReadFromJsonAsync<AuthResponse>();
         Assert.NotNull(auth);
         Assert.False(string.IsNullOrWhiteSpace(auth!.AccessToken));
+        Assert.False(string.IsNullOrWhiteSpace(auth.RefreshToken));
 
         // Act: call protected endpoint with token
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth.AccessToken);
@@ -41,7 +42,7 @@ public sealed class AuthFlowTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task Me_WithoutToken_IsUnauthorized()
+    public async Task Me_WithoutToken_ReturnsUnauthorized()
     {
         // Ensure no token
         _client.DefaultRequestHeaders.Authorization = null;
@@ -78,4 +79,61 @@ public sealed class AuthFlowTests : IClassFixture<CustomWebApplicationFactory>
 
         Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
     }
+
+    [Fact]
+    public async Task Refresh_WithValidToken_RotatesTokens()
+    {
+        var email = $"refresh{Guid.NewGuid():N}@example.com";
+        var password = "Password123!";
+        var registerRes = await _client.PostAsJsonAsync("/api/auth/register", new RegisterRequest(email, password));
+        registerRes.EnsureSuccessStatusCode();
+        var auth = await registerRes.Content.ReadFromJsonAsync<AuthResponse>();
+        Assert.NotNull(auth);
+
+        var refreshRes = await _client.PostAsJsonAsync("/api/auth/refresh", new RefreshRequest(auth!.RefreshToken));
+        refreshRes.EnsureSuccessStatusCode();
+        var refreshed = await refreshRes.Content.ReadFromJsonAsync<AuthResponse>();
+        Assert.NotNull(refreshed);
+        Assert.NotEqual(auth.AccessToken, refreshed!.AccessToken);
+        Assert.NotEqual(auth.RefreshToken, refreshed.RefreshToken);
+
+        var reuse = await _client.PostAsJsonAsync("/api/auth/refresh", new RefreshRequest(auth.RefreshToken));
+        Assert.Equal(HttpStatusCode.Unauthorized, reuse.StatusCode);
+    }
+
+    [Fact]
+    public async Task Refresh_WithInvalidToken_ReturnsUnauthorized()
+    {
+        var email = $"refreshinvalid{Guid.NewGuid():N}@example.com";
+        var password = "Password123!";
+        var registerRes = await _client.PostAsJsonAsync("/api/auth/register", new RegisterRequest(email, password));
+        registerRes.EnsureSuccessStatusCode();
+        var auth = await registerRes.Content.ReadFromJsonAsync<AuthResponse>();
+        Assert.NotNull(auth);
+
+        var tampered = auth!.RefreshToken + "invalid";
+        var res = await _client.PostAsJsonAsync("/api/auth/refresh", new RefreshRequest(tampered));
+        Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
+
+        var followUp = await _client.PostAsJsonAsync("/api/auth/refresh", new RefreshRequest(auth.RefreshToken));
+        followUp.EnsureSuccessStatusCode();
+    }
+
+    [Fact]
+    public async Task Logout_WithProvidedToken_RevokesRefreshToken()
+    {
+        var email = $"logout{Guid.NewGuid():N}@example.com";
+        var password = "Password123!";
+        var registerRes = await _client.PostAsJsonAsync("/api/auth/register", new RegisterRequest(email, password));
+        registerRes.EnsureSuccessStatusCode();
+        var auth = await registerRes.Content.ReadFromJsonAsync<AuthResponse>();
+        Assert.NotNull(auth);
+
+        var logoutRes = await _client.PostAsJsonAsync("/api/auth/logout", new RefreshRequest(auth!.RefreshToken));
+        Assert.Equal(HttpStatusCode.NoContent, logoutRes.StatusCode);
+
+        var refreshRes = await _client.PostAsJsonAsync("/api/auth/refresh", new RefreshRequest(auth.RefreshToken));
+        Assert.Equal(HttpStatusCode.Unauthorized, refreshRes.StatusCode);
+    }
 }
+

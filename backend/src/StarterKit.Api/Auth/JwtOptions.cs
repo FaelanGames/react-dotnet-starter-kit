@@ -6,4 +6,5 @@ public sealed class JwtOptions
     public string Audience { get; init; } = "";
     public string SigningKey { get; init; } = "";
     public int ExpiresMinutes { get; init; } = 60;
+    public int RefreshTokenDays { get; init; } = 14;
 }

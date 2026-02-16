@@ -8,6 +8,7 @@ This directory contains the React single-page app for the React + .NET Starter K
 - Centralized auth context that stores tokens in `localStorage` and injects them into every API request.
 - Protected routes (React Router) and example pages for Register, Login, and Dashboard.
 - Vitest + Testing Library coverage for pages, auth context, and error paths.
+- Automatic refresh-token rotation plus logout/revoke support.
 
 ## Local development
 
