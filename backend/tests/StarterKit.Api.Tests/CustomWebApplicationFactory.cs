@@ -1,10 +1,10 @@
-﻿using System.Data.Common;
-using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using StarterKit.Api.Data;
+using StarterKit.Infrastructure.Data;
+using System.Data.Common;
 
 namespace StarterKit.Api.Tests;
 

@@ -1,8 +1,7 @@
+using StarterKit.Application.Dtos;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using StarterKit.Api.Features.Auth;
-using StarterKit.Api.Features.Users;
 
 namespace StarterKit.Api.Tests;
 
@@ -23,10 +22,10 @@ public sealed class AuthFlowTests : IClassFixture<CustomWebApplicationFactory>
         var password = "Password123!";
 
         // Act: register
-        var registerRes = await _client.PostAsJsonAsync("/api/auth/register", new RegisterRequest(email, password));
+        var registerRes = await _client.PostAsJsonAsync("/api/auth/register", new RegisterRequestDto(email, password));
         registerRes.EnsureSuccessStatusCode();
 
-        var auth = await registerRes.Content.ReadFromJsonAsync<AuthResponse>();
+        var auth = await registerRes.Content.ReadFromJsonAsync<AuthResponseDto>();
         Assert.NotNull(auth);
         Assert.False(string.IsNullOrWhiteSpace(auth!.AccessToken));
         Assert.False(string.IsNullOrWhiteSpace(auth.RefreshToken));
@@ -36,7 +35,7 @@ public sealed class AuthFlowTests : IClassFixture<CustomWebApplicationFactory>
         var meRes = await _client.GetAsync("/api/users/me");
         meRes.EnsureSuccessStatusCode();
 
-        var me = await meRes.Content.ReadFromJsonAsync<MeResponse>();
+        var me = await meRes.Content.ReadFromJsonAsync<MeResponseDto>();
         Assert.NotNull(me);
         Assert.Equal(email.ToLowerInvariant(), me!.Email);
     }
@@ -58,10 +57,10 @@ public sealed class AuthFlowTests : IClassFixture<CustomWebApplicationFactory>
         var email = $"dupe{Guid.NewGuid():N}@example.com";
         var password = "Password123!";
 
-        var first = await _client.PostAsJsonAsync("/api/auth/register", new RegisterRequest(email, password));
+        var first = await _client.PostAsJsonAsync("/api/auth/register", new RegisterRequestDto(email, password));
         first.EnsureSuccessStatusCode();
 
-        var second = await _client.PostAsJsonAsync("/api/auth/register", new RegisterRequest(email, password));
+        var second = await _client.PostAsJsonAsync("/api/auth/register", new RegisterRequestDto(email, password));
 
         Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
         var message = await second.Content.ReadAsStringAsync();
@@ -73,9 +72,9 @@ public sealed class AuthFlowTests : IClassFixture<CustomWebApplicationFactory>
     {
         var email = $"login{Guid.NewGuid():N}@example.com";
         var password = "Password123!";
-        await _client.PostAsJsonAsync("/api/auth/register", new RegisterRequest(email, password));
+        await _client.PostAsJsonAsync("/api/auth/register", new RegisterRequestDto(email, password));
 
-        var res = await _client.PostAsJsonAsync("/api/auth/login", new LoginRequest(email, "Wrong123!"));
+        var res = await _client.PostAsJsonAsync("/api/auth/login", new LoginRequestDto(email, "Wrong123!"));
 
         Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
     }
@@ -85,19 +84,19 @@ public sealed class AuthFlowTests : IClassFixture<CustomWebApplicationFactory>
     {
         var email = $"refresh{Guid.NewGuid():N}@example.com";
         var password = "Password123!";
-        var registerRes = await _client.PostAsJsonAsync("/api/auth/register", new RegisterRequest(email, password));
+        var registerRes = await _client.PostAsJsonAsync("/api/auth/register", new RegisterRequestDto(email, password));
         registerRes.EnsureSuccessStatusCode();
-        var auth = await registerRes.Content.ReadFromJsonAsync<AuthResponse>();
+        var auth = await registerRes.Content.ReadFromJsonAsync<AuthResponseDto>();
         Assert.NotNull(auth);
 
-        var refreshRes = await _client.PostAsJsonAsync("/api/auth/refresh", new RefreshRequest(auth!.RefreshToken));
+        var refreshRes = await _client.PostAsJsonAsync("/api/auth/refresh", new RefreshRequestDto(auth!.RefreshToken));
         refreshRes.EnsureSuccessStatusCode();
-        var refreshed = await refreshRes.Content.ReadFromJsonAsync<AuthResponse>();
+        var refreshed = await refreshRes.Content.ReadFromJsonAsync<AuthResponseDto>();
         Assert.NotNull(refreshed);
         Assert.NotEqual(auth.AccessToken, refreshed!.AccessToken);
         Assert.NotEqual(auth.RefreshToken, refreshed.RefreshToken);
 
-        var reuse = await _client.PostAsJsonAsync("/api/auth/refresh", new RefreshRequest(auth.RefreshToken));
+        var reuse = await _client.PostAsJsonAsync("/api/auth/refresh", new RefreshRequestDto(auth.RefreshToken));
         Assert.Equal(HttpStatusCode.Unauthorized, reuse.StatusCode);
     }
 
@@ -106,16 +105,16 @@ public sealed class AuthFlowTests : IClassFixture<CustomWebApplicationFactory>
     {
         var email = $"refreshinvalid{Guid.NewGuid():N}@example.com";
         var password = "Password123!";
-        var registerRes = await _client.PostAsJsonAsync("/api/auth/register", new RegisterRequest(email, password));
+        var registerRes = await _client.PostAsJsonAsync("/api/auth/register", new RegisterRequestDto(email, password));
         registerRes.EnsureSuccessStatusCode();
-        var auth = await registerRes.Content.ReadFromJsonAsync<AuthResponse>();
+        var auth = await registerRes.Content.ReadFromJsonAsync<AuthResponseDto>();
         Assert.NotNull(auth);
 
         var tampered = auth!.RefreshToken + "invalid";
-        var res = await _client.PostAsJsonAsync("/api/auth/refresh", new RefreshRequest(tampered));
+        var res = await _client.PostAsJsonAsync("/api/auth/refresh", new RefreshRequestDto(tampered));
         Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
 
-        var followUp = await _client.PostAsJsonAsync("/api/auth/refresh", new RefreshRequest(auth.RefreshToken));
+        var followUp = await _client.PostAsJsonAsync("/api/auth/refresh", new RefreshRequestDto(auth.RefreshToken));
         followUp.EnsureSuccessStatusCode();
     }
 
@@ -124,15 +123,15 @@ public sealed class AuthFlowTests : IClassFixture<CustomWebApplicationFactory>
     {
         var email = $"logout{Guid.NewGuid():N}@example.com";
         var password = "Password123!";
-        var registerRes = await _client.PostAsJsonAsync("/api/auth/register", new RegisterRequest(email, password));
+        var registerRes = await _client.PostAsJsonAsync("/api/auth/register", new RegisterRequestDto(email, password));
         registerRes.EnsureSuccessStatusCode();
-        var auth = await registerRes.Content.ReadFromJsonAsync<AuthResponse>();
+        var auth = await registerRes.Content.ReadFromJsonAsync<AuthResponseDto>();
         Assert.NotNull(auth);
 
-        var logoutRes = await _client.PostAsJsonAsync("/api/auth/logout", new RefreshRequest(auth!.RefreshToken));
+        var logoutRes = await _client.PostAsJsonAsync("/api/auth/logout", new RefreshRequestDto(auth!.RefreshToken));
         Assert.Equal(HttpStatusCode.NoContent, logoutRes.StatusCode);
 
-        var refreshRes = await _client.PostAsJsonAsync("/api/auth/refresh", new RefreshRequest(auth.RefreshToken));
+        var refreshRes = await _client.PostAsJsonAsync("/api/auth/refresh", new RefreshRequestDto(auth.RefreshToken));
         Assert.Equal(HttpStatusCode.Unauthorized, refreshRes.StatusCode);
     }
 }
