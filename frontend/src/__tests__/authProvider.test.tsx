@@ -76,7 +76,7 @@ describe("AuthProvider", () => {
 
     let protectedCalls = 0;
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
-      const url = typeof input === "string" ? input : input.url;
+      const url = typeof input === "string" ? input : input instanceof Request ? input.url : input.toString();
       if (url.includes("/api/auth/refresh")) {
         return Promise.resolve(
           new Response(
