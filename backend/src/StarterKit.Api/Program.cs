@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
-using StarterKit.Api.Auth;
-using StarterKit.Api.Data;
 using System.Text;
+using StarterKit.Infrastructure.Data;
+using StarterKit.Infrastructure.Settings;
+using StarterKit.Infrastructure.Extensions;
+using StarterKit.Application;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,15 +55,8 @@ builder.Services.AddCors(opt =>
     );
 });
 
-// EF Core + SQLite
-builder.Services.AddDbContext<AppDbContext>(opt =>
-{
-    opt.UseSqlite(builder.Configuration.GetConnectionString("Default"));
-});
-
-// JWT options + services
-builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
-builder.Services.AddSingleton<TokenService>();
+builder.Services.AddStarterKitApplication();
+builder.Services.AddStarterKitInfrastructure(builder.Configuration);
 
 var jwt = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
           ?? throw new InvalidOperationException("Missing Jwt config.");
@@ -107,7 +102,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// Ensure DB migrations applied on startup (DX win for buyers)
+// Ensure DB migrations applied on startup
 if (!app.Environment.IsEnvironment("Testing"))
 {
     await DbInitializer.EnsureMigratedAsync(app.Services);
