@@ -1,41 +1,8 @@
-import { type SubmitEvent, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { login } from "../api/auth";
-import { useAuth } from "../auth/useAuth";
+import { Link } from "react-router-dom";
+import { useLoginForm } from "./useLoginForm";
 
 export function LoginPage() {
-  const nav = useNavigate();
-  const location = useLocation();
-  const { api, setAuthTokens } = useAuth();
-
-  const from = useMemo(() => {
-    const st = location.state as { from?: string } | null;
-    return st?.from ?? "/dashboard";
-  }, [location.state]);
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function onSubmit(e: SubmitEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setError(null);
-
-    try {
-      const res = await login(api, email, password);
-      setAuthTokens({
-        accessToken: res.accessToken,
-        refreshToken: res.refreshToken,
-      });
-      nav(from, { replace: true });
-    } catch (err: any) {
-      setError(err?.message ?? "Login failed");
-    } finally {
-      setBusy(false);
-    }
-  }
+  const { email, password, busy, error, setEmail, setPassword, onSubmit } = useLoginForm();
 
   return (
     <div style={{ maxWidth: 420, margin: "48px auto", padding: 16 }}>

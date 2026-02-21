@@ -5,8 +5,8 @@ import {
   AuthProvider,
   REFRESH_TOKEN_STORAGE_KEY,
   TOKEN_STORAGE_KEY,
-} from "../auth/AuthProvider";
-import { useAuth } from "../auth/useAuth";
+} from "./AuthProvider";
+import { useAuth } from "./useAuth";
 
 function renderWithAuthCapture() {
   let latest: ReturnType<typeof useAuth> | null = null;

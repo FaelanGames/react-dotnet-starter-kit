@@ -1,39 +1,8 @@
-import { type SubmitEvent, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { register } from "../api/auth";
-import { useAuth } from "../auth/useAuth";
+import { Link } from "react-router-dom";
+import { useRegisterForm } from "./useRegisterForm";
 
 export function RegisterPage() {
-  const nav = useNavigate();
-  const { api, setAuthTokens } = useAuth();
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function onSubmit(e: SubmitEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setError(null);
-
-    try {
-      const res = await register(api, email, password);
-      setAuthTokens({
-        accessToken: res.accessToken,
-        refreshToken: res.refreshToken,
-      });
-      nav("/dashboard", { replace: true });
-    } catch (err: any) {
-      if (err?.status === 409) {
-        setError("Email is already registered.");
-      } else {
-        setError(err?.message ?? "Registration failed");
-      }
-    } finally {
-      setBusy(false);
-    }
-  }
+  const { email, password, busy, error, setEmail, setPassword, onSubmit } = useRegisterForm();
 
   return (
     <div style={{ maxWidth: 420, margin: "48px auto", padding: 16 }}>

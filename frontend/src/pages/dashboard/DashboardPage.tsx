@@ -1,30 +1,9 @@
-import { useEffect, useState } from "react";
-import { me, type MeResponse } from "../api/users";
-import { useAuth } from "../auth/useAuth";
+import { useAuth } from "../../auth/useAuth";
+import { useDashboardData } from "./useDashboardData";
 
 export function DashboardPage() {
   const { api, logout } = useAuth();
-  const [data, setData] = useState<MeResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let alive = true;
-
-    (async () => {
-      try {
-        const res = await me(api);
-        if (!alive) return;
-        setData(res);
-      } catch (err: any) {
-        if (!alive) return;
-        setError(err?.message ?? "Failed to load user");
-      }
-    })();
-
-    return () => {
-      alive = false;
-    };
-  }, [api]);
+  const { data, error } = useDashboardData(api);
 
   return (
     <div style={{ maxWidth: 720, margin: "48px auto", padding: 16 }}>
