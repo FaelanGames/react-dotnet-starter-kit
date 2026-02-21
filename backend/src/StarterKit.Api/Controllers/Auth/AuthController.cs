@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using StarterKit.Api.Errors;
 using StarterKit.Application.Dtos;
 using StarterKit.Application.Interfaces;
 
@@ -15,32 +16,43 @@ public sealed class AuthController : ControllerBase
         _authService = authService;
     }
 
-    // TODO: Improve reponses
     [HttpPost("register")]
     public async Task<ActionResult<AuthResponseDto>> Register([FromBody] RegisterRequestDto request)
     {
-        var response = await _authService.RegisterAsync(request, HttpContext.RequestAborted);
-        return Ok(response);
+        var result = await _authService.RegisterAsync(request, HttpContext.RequestAborted);
+        if (!result.IsSuccess || result.Value is null)
+            return ApplicationErrorMapper.Map<AuthResponseDto>(this, result.Error);
+
+        return Ok(result.Value);
     }
 
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponseDto>> Login([FromBody] LoginRequestDto request)
     {
-        var response = await _authService.LoginAsync(request, HttpContext.RequestAborted);
-        return Ok(response);
+        var result = await _authService.LoginAsync(request, HttpContext.RequestAborted);
+        if (!result.IsSuccess || result.Value is null)
+            return ApplicationErrorMapper.Map<AuthResponseDto>(this, result.Error);
+
+        return Ok(result.Value);
     }
 
     [HttpPost("refresh")]
     public async Task<ActionResult<AuthResponseDto>> Refresh([FromBody] RefreshRequestDto request)
     {
-        var response = await _authService.RefreshAsync(request, HttpContext.RequestAborted);
-        return Ok(response);
+        var result = await _authService.RefreshAsync(request, HttpContext.RequestAborted);
+        if (!result.IsSuccess || result.Value is null)
+            return ApplicationErrorMapper.Map<AuthResponseDto>(this, result.Error);
+
+        return Ok(result.Value);
     }
 
     [HttpPost("logout")]
     public async Task<IActionResult> Logout([FromBody] RefreshRequestDto request)
     {
-        await _authService.LogoutAsync(request, HttpContext.RequestAborted);
+        var result = await _authService.LogoutAsync(request, HttpContext.RequestAborted);
+        if (!result.IsSuccess)
+            return ApplicationErrorMapper.Map(this, result.Error);
+
         return NoContent();
     }
 }

@@ -4,6 +4,7 @@ using Moq;
 using StarterKit.Api.Features.Auth;
 using StarterKit.Application.Dtos;
 using StarterKit.Application.Interfaces;
+using StarterKit.Application.Results;
 
 namespace StarterKit.Api.Tests;
 
@@ -24,7 +25,7 @@ public sealed class AuthControllerTests
 
         _mockAuthService
             .Setup(s => s.RegisterAsync(request, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(response);
+            .ReturnsAsync(Result<AuthResponseDto>.Success(response));
 
         var controller = CreateController();
 
@@ -43,7 +44,7 @@ public sealed class AuthControllerTests
 
         _mockAuthService
             .Setup(s => s.LoginAsync(request, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(response);
+            .ReturnsAsync(Result<AuthResponseDto>.Success(response));
 
         var controller = CreateController();
 
@@ -62,7 +63,7 @@ public sealed class AuthControllerTests
 
         _mockAuthService
             .Setup(s => s.RefreshAsync(request, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(response);
+            .ReturnsAsync(Result<AuthResponseDto>.Success(response));
 
         var controller = CreateController();
 
@@ -80,7 +81,7 @@ public sealed class AuthControllerTests
 
         _mockAuthService
             .Setup(s => s.LogoutAsync(request, It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(Result.Success());
 
         var controller = CreateController();
 

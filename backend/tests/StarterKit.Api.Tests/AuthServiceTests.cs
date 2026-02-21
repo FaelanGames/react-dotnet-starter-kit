@@ -1,6 +1,6 @@
 using Moq;
-using Newtonsoft.Json.Linq;
 using StarterKit.Application.Dtos;
+using StarterKit.Application.Results;
 using StarterKit.Application.Services;
 using StarterKit.Domain.Entities;
 using StarterKit.Domain.Interfaces.Repositories;
@@ -41,7 +41,7 @@ public sealed class AuthServiceTests
     }
 
     [Fact]
-    public async Task RegisterAsync_WhenEmailExists_ThrowsInvalidOperationException()
+    public async Task RegisterAsync_WhenEmailExists_ReturnsEmailAlreadyRegistered()
     {
         _mockUsers
             .Setup(r => r.EmailExistsAsync("user@example.com", It.IsAny<CancellationToken>()))
@@ -50,7 +50,10 @@ public sealed class AuthServiceTests
         var request = new RegisterRequestDto("user@example.com", "Password123!");
         var service = CreateService();
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => service.RegisterAsync(request, It.IsAny<CancellationToken>()));
+        var result = await service.RegisterAsync(request, It.IsAny<CancellationToken>());
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(ErrorCode.EmailAlreadyRegistered, result.Error?.Code);
 
         _mockUsers.Verify(r => r.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()), Times.Never);
         _mockRefreshTokens.Verify(r => r.AddAsync(It.IsAny<RefreshToken>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -90,9 +93,11 @@ public sealed class AuthServiceTests
 
         var response = await service.RegisterAsync(registerRequest, It.IsAny<CancellationToken>());
 
-        Assert.Equal(accessToken, response.AccessToken);
-        Assert.Equal(refreshToken, response.RefreshToken);
-        Assert.Equal(3600, response.ExpiresInSeconds);
+        Assert.True(response.IsSuccess);
+        Assert.NotNull(response.Value);
+        Assert.Equal(accessToken, response.Value!.AccessToken);
+        Assert.Equal(refreshToken, response.Value.RefreshToken);
+        Assert.Equal(3600, response.Value.ExpiresInSeconds);
 
         _mockUsers.Verify(
             r => r.AddAsync(It.Is<User>(u => u.Email == "user@example.com"), It.IsAny<CancellationToken>()),
@@ -112,7 +117,7 @@ public sealed class AuthServiceTests
     }
 
     [Fact]
-    public async Task LoginAsync_WithWrongPassword_ThrowsUnauthorizedAccessException()
+    public async Task LoginAsync_WithWrongPassword_ReturnsInvalidCredentials()
     {
         var user = new User(Guid.NewGuid(), "user@example.com", "stored-hash", DateTime.UtcNow);
 
@@ -127,7 +132,10 @@ public sealed class AuthServiceTests
         var service = CreateService();
         var request = new LoginRequestDto("user@example.com", "Password123!");
 
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.LoginAsync(request));
+        var response = await service.LoginAsync(request);
+
+        Assert.False(response.IsSuccess);
+        Assert.Equal(ErrorCode.InvalidCredentials, response.Error?.Code);
 
         _mockRefreshTokens.Verify(r => r.AddAsync(It.IsAny<RefreshToken>(), It.IsAny<CancellationToken>()), Times.Never);
         _mockUnitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
@@ -167,9 +175,11 @@ public sealed class AuthServiceTests
 
         var response = await service.RefreshAsync(new RefreshRequestDto("refresh-token"), It.IsAny<CancellationToken>());
 
-        Assert.Equal("new-access-token", response.AccessToken);
-        Assert.Equal("new-refresh-token", response.RefreshToken);
-        Assert.Equal(3600, response.ExpiresInSeconds);
+        Assert.True(response.IsSuccess);
+        Assert.NotNull(response.Value);
+        Assert.Equal("new-access-token", response.Value!.AccessToken);
+        Assert.Equal("new-refresh-token", response.Value.RefreshToken);
+        Assert.Equal(3600, response.Value.ExpiresInSeconds);
 
         Assert.NotNull(current.RevokedUtc);
         _mockUnitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));

@@ -1,7 +1,7 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using StarterKit.Api.Errors;
 using StarterKit.Application.Dtos;
 using StarterKit.Application.Interfaces;
 
@@ -25,7 +25,11 @@ public sealed class UsersController : ControllerBase
         var userId = GetUserId();
         if (userId is null) return Unauthorized();
 
-        return await _userService.GetCurrentUserAsync(userId.Value, HttpContext.RequestAborted);
+        var result = await _userService.GetCurrentUserAsync(userId.Value, HttpContext.RequestAborted);
+        if (!result.IsSuccess || result.Value is null)
+            return ApplicationErrorMapper.Map<MeResponseDto>(this, result.Error);
+
+        return result.Value;
     }
 
     private Guid? GetUserId()
@@ -33,4 +37,5 @@ public sealed class UsersController : ControllerBase
         var uid = User.FindFirstValue("uid");
         return Guid.TryParse(uid, out var id) ? id : null;
     }
+
 }
