@@ -1,8 +1,8 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { RequireAuth } from "./auth/RequireAuth";
-import { DashboardPage } from "./pages/DashboardPage";
-import { LoginPage } from "./pages/LoginPage";
-import { RegisterPage } from "./pages/RegisterPage";
+import { DashboardPage } from "./pages/dashboard/DashboardPage";
+import { LoginPage } from "./pages/auth/login/LoginPage";
+import { RegisterPage } from "./pages/auth/register/RegisterPage";
 
 export default function App() {
   return (
