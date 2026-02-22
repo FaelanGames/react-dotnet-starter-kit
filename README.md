@@ -193,7 +193,7 @@ npm run test:coverage
 
 This runs:
 
-* backend coverage with Coverlet (Cobertura output + minimum total line threshold)
+* backend coverage with Coverlet (Cobertura output + minimum total thresholds of 80% line and 65% branch)
 * frontend coverage with Vitest v8 provider
 
 ### Backend coverage report (HTML)
