@@ -1,4 +1,6 @@
 # React + .NET Starter Kit
+[![CI](https://github.com/FaelanGames/react-dotnet-starter-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/FaelanGames/react-dotnet-starter-kit/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/FaelanGames/react-dotnet-starter-kit/branch/main/graph/badge.svg)](https://codecov.io/gh/FaelanGames/react-dotnet-starter-kit)
 [![Support on Ko-fi](https://img.shields.io/badge/Support-Ko--fi-orange?logo=ko-fi)](https://ko-fi.com/faelangames)
 
 
@@ -177,6 +179,62 @@ npm run test
 ```bash
 cd backend
 dotnet test
+```
+
+---
+
+## Coverage
+
+You can generate coverage for both backend and frontend from the repo root:
+
+```bash
+npm run test:coverage
+```
+
+This runs:
+
+* backend coverage with Coverlet (Cobertura output + minimum total line threshold)
+* frontend coverage with Vitest v8 provider
+
+### Backend coverage report (HTML)
+
+```bash
+npm run coverage:report:backend
+```
+
+Open:
+
+* `backend/TestResults/CoverageReport/index.html`
+
+### Frontend coverage report (HTML)
+
+Open:
+
+* `frontend/coverage/index.html`
+
+### PowerShell helper
+
+You can also run:
+
+```powershell
+./scripts/coverage.ps1
+```
+
+---
+
+## Showing coverage on GitHub
+
+Yes, coverage can be shown on the GitHub page.
+
+Two common options:
+
+* Upload CI artifacts only (already configured in `.github/workflows/ci.yml`) so reports are downloadable per run.
+* Publish to a service like Codecov/Coveralls and add a badge to the top of this README (Codecov upload is now configured in CI).
+
+Example Codecov badge (replace `<owner>` and `<repo>`):
+
+```md
+[![codecov](https://codecov.io/gh/<owner>/<repo>/branch/main/graph/badge.svg)](https://codecov.io/gh/<owner>/<repo>)
 ```
 
 ---

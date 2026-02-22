@@ -41,7 +41,30 @@ jobs:
 
       - name: Test
         working-directory: backend
-        run: dotnet test -c Release --no-build
+        run: dotnet test tests/StarterKit.Api.Tests -c Release --no-build /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=../../TestResults/coverage/ /p:Threshold=20 /p:ThresholdType=line /p:ThresholdStat=total
+
+      - name: Setup local dotnet tools
+        working-directory: .
+        run: dotnet tool restore
+
+      - name: Build backend coverage report
+        working-directory: .
+        run: dotnet tool run reportgenerator -reports:backend/TestResults/coverage/coverage.cobertura.xml -targetdir:backend/TestResults/CoverageReport -reporttypes:"Html;TextSummary"
+
+      - name: Upload backend coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: |
+            backend/TestResults/coverage/
+            backend/TestResults/CoverageReport/
+
+      - name: Upload backend coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: backend/TestResults/coverage/coverage.cobertura.xml
+          flags: backend
+          fail_ci_if_error: false
 
   frontend:
     name: Frontend (Vite + Vitest)
@@ -64,7 +87,20 @@ jobs:
 
       - name: Test
         working-directory: frontend
-        run: npm run test -- --run
+        run: npm run test:coverage
+
+      - name: Upload frontend coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/
+
+      - name: Upload frontend coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: frontend/coverage/lcov.info
+          flags: frontend
+          fail_ci_if_error: false
 
       - name: Build
         working-directory: frontend
