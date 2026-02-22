@@ -45,3 +45,14 @@ frontend/.cache/
 # Logs
 # =====================
 *.log
+
+# =====================
+# Coverage / Test Reports
+# =====================
+backend/TestResults/
+frontend/coverage/
+**/coverage.cobertura.xml
+**/coverage.opencover.xml
+**/coverage.info
+**/lcov.info
+coverage/
