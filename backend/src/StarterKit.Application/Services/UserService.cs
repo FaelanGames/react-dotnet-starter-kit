@@ -1,5 +1,6 @@
 using StarterKit.Application.Dtos;
 using StarterKit.Application.Interfaces;
+using StarterKit.Application.Results;
 using StarterKit.Domain.Interfaces.Repositories;
 
 namespace StarterKit.Application.Services;
@@ -13,11 +14,14 @@ public sealed class UserService : IUserService
         _users = users;
     }
 
-    public async Task<MeResponseDto> GetCurrentUserAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async Task<Result<MeResponseDto>> GetCurrentUserAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        var user = await _users.GetByIdAsync(userId, cancellationToken)
-                   ?? throw new UnauthorizedAccessException();
+        var user = await _users.GetByIdAsync(userId, cancellationToken);
+        if (user is null)
+        {
+            return Result<MeResponseDto>.Failure(new AppError(ErrorCode.UserNotFound, "User not found."));
+        }
 
-        return new MeResponseDto(user.Id, user.Email, user.CreatedUtc);
+        return Result<MeResponseDto>.Success(new MeResponseDto(user.Id, user.Email, user.CreatedUtc));
     }
 }

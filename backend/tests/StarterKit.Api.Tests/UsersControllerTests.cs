@@ -5,6 +5,7 @@ using Moq;
 using StarterKit.Api.Features.Users;
 using StarterKit.Application.Dtos;
 using StarterKit.Application.Interfaces;
+using StarterKit.Application.Results;
 
 namespace StarterKit.Api.Tests;
 
@@ -48,7 +49,7 @@ public sealed class UsersControllerTests
 
         _mockUserService
             .Setup(s => s.GetCurrentUserAsync(userId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expected);
+            .ReturnsAsync(Result<MeResponseDto>.Success(expected));
 
         var principal = BuildPrincipal(new Claim("uid", userId.ToString()));
         var controller = CreateController(principal);

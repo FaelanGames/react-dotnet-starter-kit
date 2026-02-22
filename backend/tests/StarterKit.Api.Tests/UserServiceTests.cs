@@ -1,4 +1,5 @@
 using Moq;
+using StarterKit.Application.Results;
 using StarterKit.Application.Services;
 using StarterKit.Domain.Entities;
 using StarterKit.Domain.Interfaces.Repositories;
@@ -15,7 +16,7 @@ public sealed class UserServiceTests
     }
 
     [Fact]
-    public async Task GetCurrentUserAsync_WhenUserMissing_ThrowsUnauthorizedAccessException()
+    public async Task GetCurrentUserAsync_WhenUserMissing_ReturnsUserNotFound()
     {
         _mockUserRepository
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
@@ -23,7 +24,10 @@ public sealed class UserServiceTests
 
         var service = createService();
 
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.GetCurrentUserAsync(Guid.NewGuid(), It.IsAny<CancellationToken>()));
+        var result = await service.GetCurrentUserAsync(Guid.NewGuid(), It.IsAny<CancellationToken>());
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(ErrorCode.UserNotFound, result.Error?.Code);
         _mockUserRepository.VerifyAll();
     }
 
@@ -42,9 +46,11 @@ public sealed class UserServiceTests
 
         var response = await service.GetCurrentUserAsync(userId, It.IsAny<CancellationToken>());
 
-        Assert.Equal(userId, response.Id);
-        Assert.Equal("user@example.com", response.Email);
-        Assert.Equal(createdUtc, response.CreatedUtc);
+        Assert.True(response.IsSuccess);
+        Assert.NotNull(response.Value);
+        Assert.Equal(userId, response.Value!.Id);
+        Assert.Equal("user@example.com", response.Value.Email);
+        Assert.Equal(createdUtc, response.Value.CreatedUtc);
         _mockUserRepository.VerifyAll();
     }
 
