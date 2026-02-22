@@ -222,23 +222,6 @@ You can also run:
 
 ---
 
-## Showing coverage on GitHub
-
-Yes, coverage can be shown on the GitHub page.
-
-Two common options:
-
-* Upload CI artifacts only (already configured in `.github/workflows/ci.yml`) so reports are downloadable per run.
-* Publish to a service like Codecov/Coveralls and add a badge to the top of this README (Codecov upload is now configured in CI).
-
-Example Codecov badge (replace `<owner>` and `<repo>`):
-
-```md
-[![codecov](https://codecov.io/gh/<owner>/<repo>/branch/main/graph/badge.svg)](https://codecov.io/gh/<owner>/<repo>)
-```
-
----
-
 ## Environment variables
 
 ### Frontend
