@@ -84,12 +84,18 @@ Make sure you have the following installed:
 * Git
 
 > No Docker required for local development.
+>
+> If you are on Windows and running commands from VS Code terminal, you may need:
+>
+> ```powershell
+> Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+> ```
 
 ---
 
 ## Quick start
 
-### 1️⃣ Clone the repository
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/FaelanGames/react-dotnet-starter-kit
@@ -98,7 +104,42 @@ cd react-dotnet-starter-kit
 
 ---
 
-### 2️⃣ Start the backend
+### 2. Install dependencies
+
+```bash
+npm install
+cd frontend
+npm install
+cd ..
+```
+
+---
+
+### 3. Trust local HTTPS certificate (.NET)
+
+```powershell
+dotnet dev-certs https --trust
+```
+
+---
+
+### 4. Configure frontend environment
+
+Create a file before starting the backend:
+
+```
+frontend/.env
+```
+
+With the following content:
+
+```bash
+VITE_API_BASE_URL=https://localhost:7042
+```
+
+---
+
+### 5. Start the backend
 
 ```bash
 cd backend
@@ -121,27 +162,10 @@ https://localhost:7042/swagger
 
 ---
 
-### 3️⃣ Configure frontend environment
-
-Create a file:
-
-```
-frontend/.env
-```
-
-With the following content:
-
-```bash
-VITE_API_BASE_URL=https://localhost:7042
-```
-
----
-
-### 4️⃣ Start the frontend
+### 6. Start the frontend
 
 ```bash
 cd frontend
-npm install
 npm run dev
 ```
 
@@ -153,15 +177,15 @@ http://localhost:5173
 
 ---
 
-### 5️⃣ Try the full flow
+### 7. Try the full flow
 
 1. Open the frontend in your browser
 2. Register a new account
-3. You’ll be redirected to the dashboard
+3. You will be redirected to the dashboard
 4. The dashboard calls `GET /api/users/me`
 5. Log out and confirm protected routes redirect correctly
 
-You now have a **fully working full‑stack app with authentication**.
+You now have a **fully working full-stack app with authentication**.
 
 ---
 
