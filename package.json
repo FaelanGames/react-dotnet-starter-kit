@@ -6,7 +6,7 @@
     "dev": "concurrently -n api,web \"dotnet watch run --project backend/src/StarterKit.Api --launch-profile StarterKit.Api\" \"npm --prefix frontend run dev\"",
     "test": "concurrently -n api,web \"dotnet test backend\" \"npm --prefix frontend run test -- --run\"",
     "test:coverage": "npm run test:coverage:backend && npm run test:coverage:frontend",
-    "test:coverage:backend": "dotnet test backend/tests/StarterKit.Api.Tests /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=../../TestResults/coverage/ /p:Threshold=20 /p:ThresholdType=line /p:ThresholdStat=total",
+    "test:coverage:backend": "dotnet test backend/tests/StarterKit.Api.Tests /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=../../TestResults/coverage/ /p:Threshold=80 /p:ThresholdType=line /p:ThresholdStat=total && dotnet test backend/tests/StarterKit.Api.Tests /p:CollectCoverage=true /p:Threshold=65 /p:ThresholdType=branch /p:ThresholdStat=total",
     "coverage:report:backend": "dotnet tool run reportgenerator -reports:backend/TestResults/coverage/coverage.cobertura.xml -targetdir:backend/TestResults/CoverageReport -reporttypes:\"Html;TextSummary\"",
     "test:coverage:frontend": "npm --prefix frontend run test:coverage",
     "build": "npm --prefix frontend run build && dotnet build backend -c Release",

@@ -61,6 +61,38 @@ public sealed class AuthServiceTests
     }
 
     [Fact]
+    public async Task RegisterAsync_WithMissingEmail_ReturnsValidationFailed()
+    {
+        var request = new RegisterRequestDto("", "Password123!");
+        var service = CreateService();
+
+        var result = await service.RegisterAsync(request, It.IsAny<CancellationToken>());
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(ErrorCode.ValidationFailed, result.Error?.Code);
+
+        _mockUsers.Verify(r => r.EmailExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockUsers.Verify(r => r.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RegisterAsync_WithShortPassword_ReturnsValidationFailed()
+    {
+        var request = new RegisterRequestDto("user@example.com", "short");
+        var service = CreateService();
+
+        var result = await service.RegisterAsync(request, It.IsAny<CancellationToken>());
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(ErrorCode.ValidationFailed, result.Error?.Code);
+
+        _mockUsers.Verify(r => r.EmailExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockUsers.Verify(r => r.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
     public async Task RegisterAsync_WithValidRequest_CreatesUserAndTokens()
     {
         var expectedExpiry = DateTime.UtcNow.AddDays(2);
@@ -132,12 +164,30 @@ public sealed class AuthServiceTests
         var service = CreateService();
         var request = new LoginRequestDto("user@example.com", "Password123!");
 
-        var response = await service.LoginAsync(request);
+        var response = await service.LoginAsync(request, It.IsAny<CancellationToken>());
 
         Assert.False(response.IsSuccess);
         Assert.Equal(ErrorCode.InvalidCredentials, response.Error?.Code);
 
         _mockRefreshTokens.Verify(r => r.AddAsync(It.IsAny<RefreshToken>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task LoginAsync_WhenUserMissing_ReturnsInvalidCredentials()
+    {
+        _mockUsers
+            .Setup(r => r.GetByEmailAsync("user@example.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((User?)null);
+
+        var service = CreateService();
+        var request = new LoginRequestDto("user@example.com", "Password123!");
+
+        var response = await service.LoginAsync(request, It.IsAny<CancellationToken>());
+
+        Assert.False(response.IsSuccess);
+        Assert.Equal(ErrorCode.InvalidCredentials, response.Error?.Code);
+        _mockPasswordHasher.Verify(h => h.Verify(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         _mockUnitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -186,6 +236,47 @@ public sealed class AuthServiceTests
     }
 
     [Fact]
+    public async Task RefreshAsync_WithMissingToken_ReturnsValidationFailed()
+    {
+        var service = CreateService();
+
+        var response = await service.RefreshAsync(new RefreshRequestDto(""), It.IsAny<CancellationToken>());
+
+        Assert.False(response.IsSuccess);
+        Assert.Equal(ErrorCode.ValidationFailed, response.Error?.Code);
+        _mockTokenHashing.Verify(h => h.Hash(It.IsAny<string>()), Times.Never);
+        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RefreshAsync_WhenUserMissingAfterTokenLookup_ReturnsInvalidRefreshToken()
+    {
+        var userId = Guid.NewGuid();
+        var current = new RefreshToken(userId, "current-token-hash", DateTime.UtcNow.AddMinutes(30));
+
+        _mockTokenHashing
+            .Setup(h => h.Hash("refresh-token"))
+            .Returns("current-token-hash");
+
+        _mockRefreshTokens
+            .Setup(r => r.GetByHashAsync("current-token-hash", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(current);
+
+        _mockUsers
+            .Setup(r => r.GetByIdAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((User?)null);
+
+        var service = CreateService();
+
+        var response = await service.RefreshAsync(new RefreshRequestDto("refresh-token"), It.IsAny<CancellationToken>());
+
+        Assert.False(response.IsSuccess);
+        Assert.Equal(ErrorCode.InvalidRefreshToken, response.Error?.Code);
+        Assert.NotNull(current.RevokedUtc);
+        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
     public async Task LogoutAsync_WithEmptyToken_DoesNothing()
     {
         var service = CreateService();
@@ -193,6 +284,25 @@ public sealed class AuthServiceTests
         await service.LogoutAsync(new RefreshRequestDto(""), It.IsAny<CancellationToken>());
 
         _mockRefreshTokens.Verify(r => r.GetByHashAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task LogoutAsync_WhenTokenNotFound_ReturnsSuccess()
+    {
+        _mockTokenHashing
+            .Setup(h => h.Hash("refresh-token"))
+            .Returns("token-hash");
+
+        _mockRefreshTokens
+            .Setup(r => r.GetByHashAsync("token-hash", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((RefreshToken?)null);
+
+        var service = CreateService();
+
+        var result = await service.LogoutAsync(new RefreshRequestDto("refresh-token"), It.IsAny<CancellationToken>());
+
+        Assert.True(result.IsSuccess);
         _mockUnitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 

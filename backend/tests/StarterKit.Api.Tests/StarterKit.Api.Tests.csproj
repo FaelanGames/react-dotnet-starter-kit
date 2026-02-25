@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <ExcludeByFile>**/Migrations/*.cs,**/Program.cs,**/Microsoft.AspNetCore.OpenApi.SourceGenerators/**/*.cs</ExcludeByFile>
   </PropertyGroup>
 
   <ItemGroup>
